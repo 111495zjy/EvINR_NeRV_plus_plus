@@ -6,3 +6,10 @@
   year={2024}
 }
 ```
+```
+@article{NERV++,
+  title={NERV++: AN ENHANCED IMPLICIT NEURAL VIDEO REPRESENTATION},
+  author={Ahmed Ghorbel1 ,Wassim Hamidouche, Luce Morin},
+  year={2024}
+}
+```
