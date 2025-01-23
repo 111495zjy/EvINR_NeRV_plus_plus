@@ -17,15 +17,15 @@ def config_parser():
     parser.add_argument('--data_path', '-d', type=str, help='Path of events.npy to train')
     parser.add_argument('--output_dir', '-o', type=str, default='logs', help='Directory to save output')
     parser.add_argument('--t_start', type=float, default=0, help='Start time')
-    parser.add_argument('--t_end', type=float, default=3.4, help='End time')
+    parser.add_argument('--t_end', type=float, default=28, help='End time')
     parser.add_argument('--H', type=int, default=180, help='Height of frames')
     parser.add_argument('--W', type=int, default=240, help='Width of frames')
     parser.add_argument('--color_event', action='store_true', default=False, help='Whether to use color event')
     parser.add_argument('--event_thresh', type=float, default=1, help='Event activation threshold')
     parser.add_argument('--train_resolution', type=int, default=50, help='Number of training frames')
     parser.add_argument('--val_resolution', type=int, default=50, help='Number of validation frames')
-    parser.add_argument('--no_c2f', action='store_true', default=True, help='Whether to use coarse-to-fine training')
-    parser.add_argument('--iters', type=int, default=1000, help='Training iterations')
+    parser.add_argument('--no_c2f', action='store_true', default=False, help='Whether to use coarse-to-fine training')
+    parser.add_argument('--iters', type=int, default=5000, help='Training iterations')
     parser.add_argument('--log_interval', type=int, default=100, help='Logging interval')
     parser.add_argument('--lr', type=float, default=3e-4, help='Learning rate')
     parser.add_argument('--net_layers', type=int, default=3, help='Number of layers in the network')
@@ -50,8 +50,8 @@ def config_parser():
     return parser
 
 def main(args):
-    #events = EventData(
-        #args.data_path, args.t_start, args.t_end, args.H, args.W, args.color_event, args.event_thresh, args.device)
+    events = EventData(
+        args.data_path, args.t_start, args.t_end, args.H, args.W, args.color_event, args.event_thresh, args.device)
     model = EvINRModel(
          H=180, W=240, recon_colors=args.color_event,stem_dim_num=args.stem_dim_num, fc_hw_dim=args.fc_hw_dim, expansion=args.expansion, 
         act=args.act, reduction=args.reduction, stride_list=args.strides, lower_width=args.lower_width, pe_embed = args.embed).to(args.device)
@@ -59,13 +59,13 @@ def main(args):
 
     writer = SummaryWriter(os.path.join(args.output_dir, args.exp_name))
     print(f'Start training ...')
-    #events.stack_event_frames(args.train_resolution)
+    events.stack_event_frames(args.train_resolution)
     for i_iter in trange(1, args.iters + 1):
-        events = EventData(
-          args.data_path, args.t_start, args.t_end, args.H, args.W, args.color_event, args.event_thresh, args.device)
+        #events = EventData(
+          #args.data_path, args.t_start, args.t_end, args.H, args.W, args.color_event, args.event_thresh, args.device)
         optimizer.zero_grad()
         
-        events.stack_event_frames(30+random.randint(1, 100))
+        #events.stack_event_frames(30+random.randint(1, 30))
         log_intensity_preds = model(events.timestamps)
         loss = model.get_losses(log_intensity_preds, events.event_frames)
 
@@ -77,7 +77,11 @@ def main(args):
             writer.add_scalar('loss', loss.item(), i_iter)
 
         if not args.no_c2f and i_iter == (args.iters // 2):
-            events.stack_event_frames((30+random.randint(1, 100)) * 2)
+            events.stack_event_frames(60)
+        if i_iter==1000:
+          events.stack_event_frames(65)
+        if i_iter==2000: 
+          events.stack_event_frames(70)
 
 
     with torch.no_grad():
@@ -90,7 +94,7 @@ def main(args):
 
             # 将 NumPy 数组转换为 PIL 图像对象
             image = Image.fromarray(image_data)
-            output_path = os.path.join('/content/NeRV_based_EvINR/logs', 'output_image_{}.png'.format(i))
+            output_path = os.path.join('/content/EvINR_NeRV_plus_plus/logs', 'output_image_{}.png'.format(i))
             image.save(output_path)
 
 
