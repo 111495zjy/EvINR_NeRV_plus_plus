@@ -63,4 +63,3 @@ def plot_event_frame_multi_channel(event_frame, threhold=3):
     event_frame_viz_b = plot_event_frame_single_channel(event_frame[..., 2], threhold)
     event_frame_viz = np.concatenate([event_frame_viz_r, event_frame_viz_g, event_frame_viz_b], axis=1)
     return event_frame_viz
-
